@@ -24,6 +24,8 @@ void url_free(URL *);
 
 void strq_push(char *, int, char);
 
+FILE *try_fopen(char *, char *);
+
 int main(int argc, char **argv) {
   if(argc < 4) {
     fprintf(stderr,
@@ -45,20 +47,20 @@ int main(int argc, char **argv) {
   }
   
   // resolv
-  struct hostent *hostentry = gethostbyname(url.host);
+  struct hostent *hostentry = gethostbyname(url.hostname);
   
   // addr
   struct sockaddr_in server_address;
   ZEROFILL(server_address);
   server_address.sin_family = AF_INET;
-  memcpy(server_address.sin_addr,
+  memcpy(&server_address.sin_addr,
     hostentry->h_addr_list[0],
     hostentry->h_length);
   server_address.sin_port = htons((u_short) url.port);
   
   // socket
   int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if(0 > connect(sock, (struct sockaddr *) &server_address, sizeof(server_address)) {
+  if(0 > connect(sock, (struct sockaddr *) &server_address, sizeof(server_address))) {
     perror("connect");
     exit(errno);
   }
@@ -74,8 +76,8 @@ int main(int argc, char **argv) {
   fflush(server_fp);
   
   // header
-  FILE *header_fp = fopen(header_filename, "w");
-  char *back = "\0\0\0\0\0";
+  FILE *header_fp = try_fopen(header_filename, "w");
+  char *back = calloc(5, 1);
   int i;
   while(EOF != (i = fgetc(server_fp))) {
     fputc(i, header_fp);
@@ -83,10 +85,11 @@ int main(int argc, char **argv) {
     if(0 == strncmp(back, "\r\n\r\n", 4))
       break;
   }
+  free(back);
   fclose(header_fp);
   
   // body
-  FILE *body_fp = fopen(body_filename, "w");
+  FILE *body_fp = try_fopen(body_filename, "w");
   while(EOF != (i = fgetc(server_fp))) {
     fputc(i, body_fp);
   }
@@ -101,13 +104,13 @@ int main(int argc, char **argv) {
 
 #define SCHEME "http://"
 #define SCHEME_LEN (sizeof(SCHEME) - 1)
-const char *url_default_path = "/";
+char * const url_default_path = "/";
 
-int url_parse(URL *url, char *str) {
+char *url_parse(URL *url, char *str) {
   int len = strlen(str);
   
   // scheme
-  if(0 != strncmp(str, SCHEME, SCHEME_LEN)
+  if(0 != strncmp(str, SCHEME, SCHEME_LEN))
     return "URLがhttp://で始まっていません";
   url->scheme = "http";
   
@@ -149,13 +152,11 @@ void strq_push(char *q, int capacity, char c) {
   }
 }
 
-
-"ab\0\0\0", 4
-  i=0; q[i+1]='b'; q="bb\0\0\0"
-  i=1; q[i+1]='\0'
-
-  q=1
-
-
-
-
+FILE *try_fopen(char *filename, char *mode) {
+  FILE *fp = fopen(filename, mode);
+  if(NULL == fp) {
+    perror(filename);
+    exit(errno);
+  }
+  return fp;
+}
