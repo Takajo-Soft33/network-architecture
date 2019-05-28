@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   }
   
   // resolv
-  struct hostent *hostentry = gethostbyname(url->host);
+  struct hostent *hostentry = gethostbyname(url.host);
   
   // addr
   struct sockaddr_in server_address;
@@ -54,9 +54,7 @@ int main(int argc, char **argv) {
   memcpy(server_address.sin_addr,
     hostentry->h_addr_list[0],
     hostentry->h_length);
-  server_address.sin_port = htons((u_short) url->port);
-  
-  url_free(&url);
+  server_address.sin_port = htons((u_short) url.port);
   
   // socket
   int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -72,7 +70,7 @@ int main(int argc, char **argv) {
   }
   
   // http
-  fprintf(server_fp, "GET %s HTTP/1.0\n\n", url->path);
+  fprintf(server_fp, "GET %s HTTP/1.0\n\n", url.path);
   fflush(server_fp);
   
   // header
@@ -96,6 +94,7 @@ int main(int argc, char **argv) {
   
   fclose(server_fp);
   close(sock);
+  url_free(&url);
   
   return 0;
 }
