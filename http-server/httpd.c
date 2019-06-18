@@ -39,7 +39,6 @@ int main(void)
 
 
 
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 サーバとしての初期化を行う
@@ -60,11 +59,28 @@ int server_init(int port)
 {
   int s;
   static struct sockaddr_in server_address;
+  // ソケットを作成
+  if((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("socket");
+    exit(1);
+  }
+  // bindするアドレスを設定
+  memset(&server_address, 0, sizeof(server_addr));
+  server_address.sin_family = AF_INET;
+  server_address.sin_port = htons(port);
+  server_address.sin_addr.s_addr = INADDR_ANY;
+  // bind
+  if(bind(s, &server_addr, sizeof(server_addr)) < 0) {
+    perror("bind");
+    exit(1);
+  }
+  // listen
+  listen(s, 5);
+  
+  return s;
 }
-#endif
 
 
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 acceptを行い、ファイルディスクリプタからファイルポインタを得る
@@ -84,12 +100,13 @@ acceptを行い、ファイルディスクリプタからファイルポイン�
 void accept_client(int s,http_request *req)
 {
   socklen_t c_len;
+  clear_request(req);
+  // 待ち受け
+  req->fd = accept(s, (struct sockaddr *) &(req->client_address), &c_len);
+  req->fp = fdopen(req->fd, "r+");
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 相手からのリクエストを調べる
@@ -99,12 +116,11 @@ main()関数から呼び出される関数
 ***********************************************************/
 void read_request(http_request *req)
 {
+  read_method(req);
+  read_path(req);
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 リクエストを処理する関数
@@ -120,12 +136,18 @@ main()関数から呼び出される関数
 ***********************************************************/
 void proc_request(http_request *req)
 {
+  if(ERROR == req->method) {
+    req->http_response = BAD_REQ;
+    return;
+  }
+  
+  make_file_status(req);
+  
+  if(OK == req->http_response)
+    set_file_ext(req);
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 レスポンスを返す関数
@@ -135,12 +157,11 @@ main()関数から呼び出される関数
 ***********************************************************/
 void send_response(http_request *req)
 {
+  send_header(req);
+  send_body(req);
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 main()関数から呼び出される関数
 クライアントとの接続をクローズする関数
@@ -151,12 +172,12 @@ main()関数から呼び出される関数
 ***********************************************************/
 void release_client(http_request *req)
 {
+  fclose(req->fp); //内部で close(req->fd) する
+  clear_request(req);
 }
-#endif
 
 
 
-#if 0
 /**********************************************************
 server_init()から呼び出される関数。
 http_request構造体のクリアを行う。
@@ -182,11 +203,10 @@ void clear_request(http_request *req)
   req->http_response=INT_SRV_E;
   req->content=NULL;
 }
-#endif
 
 
 
-#if 0
+
 /***********************************************************
 read_request()から呼び出される関数。
 クライアントから送られてきたメソッドを解析する。
@@ -224,14 +244,25 @@ void read_method(http_request *req)
     {"HEAD",HEAD},
     {NULL  ,ERROR}
   };
+  static int n_methods = sizeof(method) / sizeof(method_type);
 
-
+  p = buf;
+  while(' ' != (*p++ = fgetc(req->fp)));
+  *p = '\0';
+  
+  for(int i = 0; i < n_methods; i++) {
+    if(strcmp(buf, method[n].name) == 0) {
+      req->method = method[n].number;
+      return;
+    }
+  }
+  
+  req->method = ERROR;
 }
-#endif
 
 
 
-#if 0
+
 /***********************************************************
 read_request()から呼び出される関数。
 クライアントから送られてきたパス名をreq->pathnameに格納する
@@ -250,12 +281,23 @@ void read_path(http_request *req)
   static const char* hex="00112233445566778899AaBbCcDdEeFf";
   char *p=req->pathname;
 
+  char c;
+  while(' ' != (c = fgetc(req->fp))) {
+    if(c == '%') {
+      int h = strpos(hex, fgetc(req->fp)) - hex >> 1;
+      int l = strpos(hex, fgetc(req->fp)) - hex >> 1;
+      c = ord(h << 4 | l);
+    }
+    
+    *p++ = c;
+  }
+  
+  *p = '\0';
 }
-#endif
 
 
 
-#if 0
+
 /***********************************************************
 proc_request()から呼び出される関数。
 ファイルのステータスをチェックして、ステータスコードを決定する関数
@@ -291,12 +333,38 @@ proc_request()から呼び出される関数。
 ***********************************************************/
 void make_file_status(http_request *req)
 {
+  char *dn = req->pathname;
+  while(0 != strcmp('.', dn)) {
+    struct stat st;
+    if(0 != stat(dn, &st)) {
+      req->http_response = NOT_FOUND;
+      return;
+    }
+    
+    if(dn == req->pathname) {
+      if(S_IFDIR & stat.st_mode) {
+        req->http_response = FORBIDDEN;
+        return;
+      }
+      
+      if(!(S_IFREG & stat.st_mode)) {
+        req->http_response = BAD_REQ;
+        return;
+      }
+    }
+    
+    if(!(S_IXRTH & stat.st_mode)) {
+      req->http_response = FORBIDDEN;
+      return;
+    }
+    
+    dn = dirname(dn);
+  }
+  
+  req->http_response = OK;
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 send_response()から呼び出される関数。
 レスポンスのヘッダを送出する関数
@@ -342,9 +410,10 @@ void send_header(http_request *req)
 {
   time_t now;
   char time_data[100];
-
+  
+  fprintf(req->fp, "HTTP/1.0 %d %s\r\n", req->http_response, reason_phrase(req->http_response));
+  fprintf(req->fp, "Server: New International Tokuyama Technology's Additional HTTP\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n");
 }
-#endif
 
 
 
@@ -375,6 +444,20 @@ void send_body(http_request *req)
   char *p;
   FILE *file_fp;
   int c;
+  
+  if(OK != req->http_response) {
+    p = reason_phrase(req->http_response);
+    fprintf(req->fp,
+            "<HTML>\r\n"
+            "<HEAD><TITLE>%3d %s</TITLE></HEAD>\r\n"
+            "</HTML>\r\n",
+            req->http_response, p,
+            req->http_response, p);
+    
+    return;
+  }
+  
+  
 }
 #endif
 
