@@ -4,6 +4,9 @@
 #include <string.h>
 #include <time.h>
 
+
+#if 0
+
 int main(void)
 {
     const int port = 8888;
@@ -47,7 +50,6 @@ int main(void)
 
 
 
-#if 0
 
 /***********************************************************
 main()関数から呼び出される関数
