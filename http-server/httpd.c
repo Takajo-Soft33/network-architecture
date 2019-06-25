@@ -130,6 +130,7 @@ void read_request(http_request *req)
   read_path(req);
 }
 
+#if 0
 
 /***********************************************************
 main()関数から呼び出される関数
@@ -602,3 +603,4 @@ char* search_content_type(char *p2)
 }
 
 
+#endif
