@@ -269,7 +269,7 @@ void read_method(http_request *req)
   req->method = ERROR;
 }
 
-#if 0
+#if 1
 
 /***********************************************************
 read_request()から呼び出される関数。
