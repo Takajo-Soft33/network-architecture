@@ -303,7 +303,6 @@ void read_path(http_request *req)
   *p = '\0';
 }
 
-#if 0
 
 
 /***********************************************************
@@ -372,6 +371,7 @@ void make_file_status(http_request *req)
   req->http_response = OK;
 }
 
+#if 0
 
 /***********************************************************
 send_response()から呼び出される関数。
