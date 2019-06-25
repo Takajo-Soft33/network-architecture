@@ -425,9 +425,10 @@ void send_header(http_request *req)
   
   fprintf(req->fp,
 	  "Server: New International Technology's TokuyamA\r\n"
-	  "Content-Type: text/html\r\n"
+	  "Content-Type: %s\r\n"
 	  "Connection: close\r\n"
-	  "\r\n");
+	  "\r\n",
+	 req->content);
 }
 
 
