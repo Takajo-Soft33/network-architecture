@@ -69,12 +69,12 @@ int server_init(int port)
     exit(1);
   }
   // bindするアドレスを設定
-  memset(&server_address, 0, sizeof(server_addr));
+  memset(&server_address, 0, sizeof(server_address));
   server_address.sin_family = AF_INET;
   server_address.sin_port = htons(port);
   server_address.sin_addr.s_addr = INADDR_ANY;
   // bind
-  if(bind(s, &server_addr, sizeof(server_addr)) < 0) {
+  if(bind(s, &server_address, sizeof(server_address)) < 0) {
     perror("bind");
     exit(1);
   }
@@ -255,8 +255,8 @@ void read_method(http_request *req)
   *p = '\0';
   
   for(int i = 0; i < n_methods; i++) {
-    if(strcmp(buf, method[n].name) == 0) {
-      req->method = method[n].number;
+    if(strcmp(buf, method[i].name) == 0) {
+      req->method = method[i].number;
       return;
     }
   }
@@ -288,9 +288,9 @@ void read_path(http_request *req)
   char c;
   while(' ' != (c = fgetc(req->fp))) {
     if(c == '%') {
-      int h = strpos(hex, fgetc(req->fp)) - hex >> 1;
-      int l = strpos(hex, fgetc(req->fp)) - hex >> 1;
-      c = ord(h << 4 | l);
+      int h = (strchr(hex, fgetc(req->fp)) - hex) >> 1;
+      int l = (strchr(hex, fgetc(req->fp)) - hex) >> 1;
+      c = (char) (h << 4 | l);
     }
     
     *p++ = c;
@@ -338,7 +338,7 @@ proc_request()から呼び出される関数。
 void make_file_status(http_request *req)
 {
   char *dn = req->pathname;
-  while(0 != strcmp('.', dn)) {
+  while(0 != strcmp(".", dn)) {
     struct stat st;
     if(0 != stat(dn, &st)) {
       req->http_response = NOT_FOUND;
@@ -346,18 +346,18 @@ void make_file_status(http_request *req)
     }
     
     if(dn == req->pathname) {
-      if(S_IFDIR & stat.st_mode) {
+      if(S_IFDIR & st.st_mode || !(S_IROTH & st.st_mode)) {
         req->http_response = FORBIDDEN;
         return;
       }
       
-      if(!(S_IFREG & stat.st_mode)) {
+      if(!(S_IFREG & st.st_mode)) {
         req->http_response = BAD_REQ;
         return;
       }
     }
     
-    if(!(S_IXRTH & stat.st_mode)) {
+    if(!(S_IXOTH & st.st_mode)) {
       req->http_response = FORBIDDEN;
       return;
     }
@@ -480,7 +480,7 @@ void send_body(http_request *req)
     return;
   }
   
-  while(0 <= (c = fgetc(file_fp)) fputc(c, req->fp);
+  while(0 <= (c = fgetc(file_fp))) fputc(c, req->fp);
   
   fclose(file_fp);
 }
@@ -590,7 +590,7 @@ char* search_content_type(char *p2)
   {"png","image/png"},
   {NULL,"application/octet-stream"}
   };
-  for(cp = content_Type; cp->ext; cp++)
+  for(cp = content_type; cp->ext; cp++)
     if(0 == strcmp(cp->ext, p2)) return cp->type;
   return "application/octet-stream";
 }
