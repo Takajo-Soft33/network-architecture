@@ -6,19 +6,25 @@
 
 int main(void)
 {
+    const int port = 8888;
+    
     int s;
     http_request request;         /*クライアントの情報を構造体にまとめている*/
 
-    s=server_init(8888);          /*サーバとしての初期化を行う*/
+    s=server_init(port);          /*サーバとしての初期化を行う*/
+    
+    printf("Listening *:%d\n", port);
 
     for(;;){
-      accept_client(s,&request);  /*accept()とfdopenを行う*/
+        accept_client(s,&request);  /*accept()とfdopenを行う*/
 
-      read_request(&request);     /*相手からのリクエストを得る*/
-      proc_request(&request);     /*リクエストを処理する*/
-      send_response(&request);    /*相手へレスポンスを送出*/
+        printf("Accept\n");
 
-      release_client(&request);   /*ファイルポインタ類を閉じる*/
+        read_request(&request);     /*相手からのリクエストを得る*/
+        proc_request(&request);     /*リクエストを処理する*/
+        send_response(&request);    /*相手へレスポンスを送出*/
+
+        release_client(&request);   /*ファイルポインタ類を閉じる*/
     }
     
     return 0;                     /*呼び出されないがmain()の返り値を記述*/
