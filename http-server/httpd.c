@@ -213,8 +213,6 @@ void clear_request(http_request *req)
   req->content=NULL;
 }
 
-#if 0
-
 
 
 /***********************************************************
@@ -270,7 +268,7 @@ void read_method(http_request *req)
   req->method = ERROR;
 }
 
-
+#if 0
 
 
 /***********************************************************
