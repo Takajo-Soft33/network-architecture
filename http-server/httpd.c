@@ -255,12 +255,15 @@ void read_method(http_request *req)
   static int n_methods = sizeof(method) / sizeof(method_type);
 
   p = buf;
-  while(' ' != (*p++ = fgetc(req->fp)));
+  int c;
+  while(' ' != (c = fgetc(req->fp)) && c >= 0) *p++ = c;
   *p = '\0';
   
-  for(int i = 0; i < n_methods; i++) {
-    if(strcmp(buf, method[i].name) == 0) {
-      req->method = method[i].number;
+  size_t len = strlen(buf);
+  
+  for(mp = method; mp->name; mp++) {
+    if(strncmp(buf, mp->name, len) == 0) {
+      req->method = mp->number;
       return;
     }
   }
@@ -269,7 +272,6 @@ void read_method(http_request *req)
 }
 
 #if 0
-
 
 /***********************************************************
 read_request()から呼び出される関数。
