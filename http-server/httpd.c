@@ -130,8 +130,6 @@ void read_request(http_request *req)
   read_path(req);
 }
 
-#if 0
-
 /***********************************************************
 main()関数から呼び出される関数
 リクエストを処理する関数
@@ -215,6 +213,7 @@ void clear_request(http_request *req)
   req->content=NULL;
 }
 
+#if 0
 
 
 
