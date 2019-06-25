@@ -602,6 +602,3 @@ char* search_content_type(char *p2)
 }
 
 
-
-
-#endif
