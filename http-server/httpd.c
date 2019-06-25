@@ -1,4 +1,8 @@
 #include "httpd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 int main(void)
 {
@@ -411,13 +415,24 @@ void send_header(http_request *req)
   time_t now;
   char time_data[100];
   
+  now = time(NULL);
+
   fprintf(req->fp, "HTTP/1.0 %d %s\r\n", req->http_response, reason_phrase(req->http_response));
-  fprintf(req->fp, "Server: New International Tokuyama Technology's Additional HTTP\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n");
+  
+  if(0 != strftime(time_data, sizeof(time_data), "%a, %d %b %Y %T %Z", localtime(now))) {
+    printf("Date: %s\r\n", time_data);
+  }
+  
+  fprintf(req->fp,
+	  "Server: New International Technology's TokuyamA\r\n"
+	  "Content-Type: text/html\r\n"
+	  "Connection: close\r\n"
+	  "\r\n");
 }
 
 
 
-#if 0
+
 /***********************************************************
 send_response()から呼び出される関数。
 オブジェクトボディを送出する
@@ -457,13 +472,19 @@ void send_body(http_request *req)
     return;
   }
   
+  if(HEAD == req->method) return;
   
+  if(NULL == (file_fp = fopen(req->pathname, "rb"))) {
+    perror("fopen");
+    return;
+  }
+  
+  while(0 <= (c = fgetc(file_fp)) fputc(c, req->fp);
+  
+  fclose(file_fp);
 }
-#endif
 
 
-
-#if 0
 /***********************************************************
 send_header()から呼び出される関数
 ステータスコードによって、返すリーズンフレーズを決める
@@ -498,15 +519,19 @@ char* reason_phrase(response_number i)
   };
   response_type *p;
 
+  for(p = response; p->phrase != NULL; p++)
+    if(i == p->num) return p->phrase;
+  
+  return NULL;
 }
-#endif
 
 
 
-#if 0
+
+
 /***********************************************************
 proc_request()から呼び出される関数
-ファイルの拡張子を調べ、context-typeを決定する
+ファイルの拡張子を調べ、content-typeを決定する
 
     pathnameに格納されている文字列で、以下の条件の位置に
     p2というポインタを設定せよ。
@@ -527,14 +552,15 @@ proc_request()から呼び出される関数
 **********************************************************/
 void set_file_ext(http_request *req)
 {
-  char *p1,*p2;
-
+  char *p2;
+  p2 = strrchr(req->pathname, '.');
+  req->content = search_content_type(p2);
 }
-#endif
 
 
 
-#if 0
+
+
 /*********************************************************
 set_file_ext()から呼び出される関数
 拡張子からcontent-typeを決定する
@@ -563,9 +589,11 @@ char* search_content_type(char *p2)
   {"png","image/png"},
   {NULL,"application/octet-stream"}
   };
-
+  for(cp = content_Type; cp->ext; cp++)
+    if(0 == strcmp(cp->ext, p2)) return cp->type;
+  return "application/octet-stream";
 }
-#endif
+
 
 
 
