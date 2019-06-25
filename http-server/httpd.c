@@ -13,7 +13,7 @@ int main(void)
 
     s=server_init(PORT);          /*サーバとしての初期化を行う*/
     
-    printf("Listening *:%d\n", PORT);
+    printf("Listening iebsd__.ie.tokuyama.ac.jp:%d\n", PORT);
 
     for(;;){
         accept_client(s,&request);  /*accept()とfdopenを行う*/
@@ -30,7 +30,7 @@ int main(void)
     return 0;                     /*呼び出されないがmain()の返り値を記述*/
 }
 
-#if 0
+
 
 /******************************************************************
 以下、このファイルのコメントの指示に従って,プログラムを書き上げて
