@@ -4,19 +4,16 @@
 #include <string.h>
 #include <time.h>
 
-
-#if 0
+#define PORT 8888
 
 int main(void)
 {
-    const int port = 8888;
-    
     int s;
     http_request request;         /*クライアントの情報を構造体にまとめている*/
 
-    s=server_init(port);          /*サーバとしての初期化を行う*/
+    s=server_init(PORT);          /*サーバとしての初期化を行う*/
     
-    printf("Listening *:%d\n", port);
+    printf("Listening *:%d\n", PORT);
 
     for(;;){
         accept_client(s,&request);  /*accept()とfdopenを行う*/
@@ -33,6 +30,7 @@ int main(void)
     return 0;                     /*呼び出されないがmain()の返り値を記述*/
 }
 
+#if 0
 
 /******************************************************************
 以下、このファイルのコメントの指示に従って,プログラムを書き上げて
