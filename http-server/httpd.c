@@ -347,6 +347,8 @@ void make_file_status(http_request *req)
       req->http_response = NOT_FOUND;
       return;
     }
+	  
+	  printf("dir: %s\n", dn);
     
     if(dn == req->pathname) {
       if(S_IFDIR & st.st_mode || !(S_IROTH & st.st_mode)) {
