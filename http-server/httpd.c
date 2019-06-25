@@ -80,7 +80,7 @@ int server_init(int port)
   server_address.sin_port = htons(port);
   server_address.sin_addr.s_addr = INADDR_ANY;
   // bind
-  if(bind(s, &server_address, sizeof(server_address)) < 0) {
+  if(bind(s, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
     perror("bind");
     exit(1);
   }
@@ -246,13 +246,11 @@ void read_method(http_request *req)
   char buf[100];
   char *p;
   method_type *mp;
-  int flag=-1;
   static method_type method[]={
     {"GET" ,GET},
     {"HEAD",HEAD},
     {NULL  ,ERROR}
   };
-  static int n_methods = sizeof(method) / sizeof(method_type);
 
   p = buf;
   int c;
