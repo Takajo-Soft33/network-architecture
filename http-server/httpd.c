@@ -420,7 +420,7 @@ void send_header(http_request *req)
   time_t now;
   char time_data[100];
   
-  now = time(NULL);
+  time(&now);
 
   fprintf(req->fp, "HTTP/1.0 %d %s\r\n", req->http_response, reason_phrase(req->http_response));
   
