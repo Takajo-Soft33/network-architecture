@@ -424,7 +424,7 @@ void send_header(http_request *req)
 
   fprintf(req->fp, "HTTP/1.0 %d %s\r\n", req->http_response, reason_phrase(req->http_response));
   
-  if(0 != strftime(time_data, sizeof(time_data), "%a, %d %b %Y %T %Z", localtime(now))) {
+  if(0 != strftime(time_data, sizeof(time_data), "%a, %d %b %Y %T %Z", localtime(&now))) {
     printf("Date: %s\r\n", time_data);
   }
   
