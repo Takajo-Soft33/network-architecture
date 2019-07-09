@@ -12,7 +12,7 @@ int main(void)
     http_request request;         /*クライアントの情報を構造体にまとめている*/
 
     s=server_init(PORT);          /*サーバとしての初期化を行う*/
-    
+
     printf("Listening iebsd__.ie.tokuyama.ac.jp:%d\n", PORT);
 
     for(;;){
@@ -26,7 +26,7 @@ int main(void)
 
         release_client(&request);   /*ファイルポインタ類を閉じる*/
     }
-    
+
     return 0;                     /*呼び出されないがmain()の返り値を記述*/
 }
 
@@ -86,7 +86,7 @@ int server_init(int port)
   }
   // listen
   listen(s, 5);
-  
+
   return s;
 }
 
@@ -149,9 +149,9 @@ void proc_request(http_request *req)
     req->http_response = BAD_REQ;
     return;
   }
-  
+
   make_file_status(req);
-  
+
   if(OK == req->http_response)
     set_file_ext(req);
 }
@@ -256,16 +256,16 @@ void read_method(http_request *req)
   int c;
   while(' ' != (c = fgetc(req->fp)) && c >= 0) *p++ = c;
   *p = '\0';
-  
+
   size_t len = strlen(buf);
-  
+
   for(mp = method; mp->name; mp++) {
     if(strncmp(buf, mp->name, len) == 0) {
       req->method = mp->number;
       return;
     }
   }
-  
+
   req->method = ERROR;
 }
 
@@ -296,10 +296,10 @@ void read_path(http_request *req)
       int l = (strchr(hex, fgetc(req->fp)) - hex) >> 1;
       c = (char) (h << 4 | l);
     }
-    
+
     *p++ = c;
   }
-  
+
   *p = '\0';
 }
 
@@ -347,29 +347,29 @@ void make_file_status(http_request *req)
       req->http_response = NOT_FOUND;
       return;
     }
-	  
+
 	  printf("dir: %s\n", dn);
-    
+
     if(dn == req->pathname) {
       if(S_IFDIR & st.st_mode || !(S_IROTH & st.st_mode)) {
         req->http_response = FORBIDDEN;
         return;
       }
-      
+
       if(!(S_IFREG & st.st_mode)) {
         req->http_response = BAD_REQ;
         return;
       }
     }
-    
+
     if(!(S_IXOTH & st.st_mode)) {
       req->http_response = FORBIDDEN;
       return;
     }
-    
+
     dn = dirname(dn);
   }
-  
+
   req->http_response = OK;
 }
 #endif
@@ -419,15 +419,15 @@ void send_header(http_request *req)
 {
   time_t now;
   char time_data[100];
-  
+
   time(&now);
 
   fprintf(req->fp, "HTTP/1.0 %d %s\r\n", req->http_response, reason_phrase(req->http_response));
-  
+
   if(0 != strftime(time_data, sizeof(time_data), "%a, %d %b %Y %T %Z", localtime(&now))) {
     fprintf(req->fp, "Date: %s\r\n", time_data);
   }
-  
+
   fprintf(req->fp,
 	  "Server: New International Technology's TokuyamA\r\n"
 	  "Content-Type: %s\r\n"
@@ -463,32 +463,32 @@ void send_body(http_request *req)
   char *p;
   FILE *file_fp;
   int c;
-  
+
   if(OK != req->http_response) {
     p = reason_phrase(req->http_response);
     fprintf(req->fp,
             "<HTML>\r\n"
             "<HEAD><TITLE>%3d %s</TITLE></HEAD>\r\n"
+            "<BODY><H1>%3d %s</H1></BODY>\r\n"
             "</HTML>\r\n",
             req->http_response, p,
             req->http_response, p);
-    
+
     return;
   }
-  
+
   if(HEAD == req->method) return;
-  
+
   if(NULL == (file_fp = fopen(req->pathname, "rb"))) {
     perror("fopen");
     return;
   }
-  
+
   while(0 <= (c = fgetc(file_fp))) fputc(c, req->fp);
-  
+
   fclose(file_fp);
 }
 
-#if 0
 /***********************************************************
 send_header()から呼び出される関数
 ステータスコードによって、返すリーズンフレーズを決める
@@ -525,7 +525,7 @@ char* reason_phrase(response_number i)
 
   for(p = response; p->phrase != NULL; p++)
     if(i == p->num) return p->phrase;
-  
+
   return NULL;
 }
 
@@ -558,9 +558,8 @@ void set_file_ext(http_request *req)
 {
   char *p2;
   p2 = strrchr(req->pathname, '.');
-  req->content = search_content_type(p2);
+  req->content = search_content_type(p2+1);
 }
-
 
 
 
@@ -586,17 +585,15 @@ char* search_content_type(char *p2)
   }c_type;
   c_type *cp;
   static c_type content_type[]={
-  {"html","text/html"},
-  {"htm","text/html"},
-  {"txt","text/plain"},
-  {"gif","image/gif"},
-  {"png","image/png"},
-  {NULL,"application/octet-stream"}
+    {"html","text/html"},
+    {"htm","text/html"},
+    {"txt","text/plain"},
+    {"gif","image/gif"},
+    {"png","image/png"},
+    {NULL,"application/octet-stream"}
   };
   for(cp = content_type; cp->ext; cp++)
-    if(0 == strcmp(cp->ext, p2)) return cp->type;
+    if(0 == strcmp(cp->ext, p2))
+      return cp->type;
   return "application/octet-stream";
 }
-
-
-#endif
