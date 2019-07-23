@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define PORT 8888
 
@@ -360,11 +361,11 @@ void make_file_status(http_request *req)
         req->http_response = BAD_REQ;
         return;
       }
-    }
-
-    if(!(S_IXOTH & st.st_mode)) {
-      req->http_response = FORBIDDEN;
-      return;
+    } else {
+      if(access(dn, X_OK)) {
+        req->http_response = FORBIDDEN;
+        return;
+      }
     }
 
     dn = dirname(dn);
