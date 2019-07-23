@@ -305,7 +305,6 @@ void read_path(http_request *req)
 }
 
 
-#if 0
 /***********************************************************
 proc_request()から呼び出される関数。
 ファイルのステータスをチェックして、ステータスコードを決定する関数
@@ -373,7 +372,6 @@ void make_file_status(http_request *req)
 
   req->http_response = OK;
 }
-#endif
 
 /***********************************************************
 send_response()から呼び出される関数。
