@@ -342,7 +342,7 @@ proc_request()から呼び出される関数。
 void make_file_status(http_request *req)
 {
   char *dn = req->pathname;
-  while(0 != strcmp(".", dn)) {
+  while(0 != strcmp(".", dn) && 0 != strcmp("/", dn)) {
     struct stat st;
     if(0 != stat(dn, &st)) {
       req->http_response = NOT_FOUND;
